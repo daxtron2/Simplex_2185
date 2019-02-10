@@ -10,9 +10,13 @@ Date: 2017/05
 #include "ControllerConfiguration.h"
 #include "imgui\ImGuiObject.h"
 
+#include "MyMesh.h"
+
 class Application
 {
 	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+
+	MyMesh* m_pMesh = nullptr;
 private:
 	static ImGuiObject gui; //GUI object
 
