@@ -121,7 +121,7 @@ void MyMesh::Render(matrix4 a_mProjection, matrix4 a_mView, matrix4 a_mModel)
 {
 	// Use the buffer and shader
 	GLuint nShader = m_pShaderMngr->GetShaderID("Basic");
-	glUseProgram(nShader); 
+	glUseProgram(nShader);
 
 	//Bind the VAO of this object
 	glBindVertexArray(m_VAO);
@@ -133,11 +133,11 @@ void MyMesh::Render(matrix4 a_mProjection, matrix4 a_mView, matrix4 a_mModel)
 	//Final Projection of the Camera
 	matrix4 m4MVP = a_mProjection * a_mView * a_mModel;
 	glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(m4MVP));
-	
+
 	//Solid
 	glUniform3f(wire, -1.0f, -1.0f, -1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, m_uVertexCount);  
+	glDrawArrays(GL_TRIANGLES, 0, m_uVertexCount);
 
 	//Wire
 	glUniform3f(wire, 1.0f, 0.0f, 1.0f);
@@ -186,15 +186,15 @@ void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 	//|  |
 	//0--1
 
-	vector3 point0(-fValue,-fValue, fValue); //0
-	vector3 point1( fValue,-fValue, fValue); //1
-	vector3 point2( fValue, fValue, fValue); //2
+	vector3 point0(-fValue, -fValue, fValue); //0
+	vector3 point1(fValue, -fValue, fValue); //1
+	vector3 point2(fValue, fValue, fValue); //2
 	vector3 point3(-fValue, fValue, fValue); //3
 
-	vector3 point4(-fValue,-fValue,-fValue); //4
-	vector3 point5( fValue,-fValue,-fValue); //5
-	vector3 point6( fValue, fValue,-fValue); //6
-	vector3 point7(-fValue, fValue,-fValue); //7
+	vector3 point4(-fValue, -fValue, -fValue); //4
+	vector3 point5(fValue, -fValue, -fValue); //5
+	vector3 point6(fValue, fValue, -fValue); //6
+	vector3 point7(-fValue, fValue, -fValue); //7
 
 	//F
 	AddQuad(point0, point1, point3, point2);
@@ -275,8 +275,41 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	//get half of the height, used to move it down to center it in ring
+	vector3 halfHeight(0, a_fHeight / 2, 0);
+	//the tip of the cone
+	vector3 topPoint(0, a_fHeight, 0);
+	//the center point on the bottom of the cone
+	vector3 basePoint(0, 0, 0);
+
+	//move the top and bottom down by half the height, to center it
+	topPoint -= halfHeight;
+	basePoint -= halfHeight;
+
+	//generate a tri for each subdivision
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		//makes a circle in the x/z plane and uses the top as the third triangle
+		//also generates another triangle to connect the base using same points from that circle
+
+		vector3 firstPoint;
+		firstPoint.x = a_fRadius * cos((float)i / a_nSubdivisions * (2 * PI));
+		firstPoint.z = a_fRadius * sin((float)i / a_nSubdivisions * (2 * PI));
+
+		vector3 secondPoint;
+		secondPoint.x = a_fRadius * cos((float)(i + 1) / a_nSubdivisions * (2 * PI));
+		secondPoint.z = a_fRadius * sin((float)(i + 1) / a_nSubdivisions * (2 * PI));
+
+		//move everything down to center it
+		firstPoint -= halfHeight;
+		secondPoint -= halfHeight;
+
+		//generate the tri for the cone part
+		AddTri(firstPoint, topPoint, secondPoint);
+		//generate the tri for the base part
+		AddTri(secondPoint, basePoint, firstPoint);
+	}
+
 	// -------------------------------
 
 	// Adding information about color
@@ -299,9 +332,52 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	//get half of the height, used to move it down to center it in ring
+	vector3 halfHeight(0, a_fHeight / 2, 0);
+	//the tip of the cone
+	vector3 topPoint(0, a_fHeight, 0);
+	//the center point on the bottom of the cone
+	vector3 basePoint(0, 0, 0);
+
+	//move the top and bottom down by half the height, to center it
+	topPoint -= halfHeight;
+	basePoint -= halfHeight;
+
+	//generate a tri for each subdivision
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		//makes a circle in the x/z plane and uses the top as the third triangle
+		//also generates another triangle to connect the base using same points from that circle
+
+		//bottom left of quad
+		vector3 firstPoint;
+		firstPoint.x = a_fRadius * cos((float)(i + 1) / a_nSubdivisions * (2 * PI));
+		firstPoint.z = a_fRadius * sin((float)(i + 1) / a_nSubdivisions * (2 * PI));
+
+		//bottom right of quad
+		vector3 secondPoint;
+		secondPoint.x = a_fRadius * cos((float)i / a_nSubdivisions * (2 * PI));
+		secondPoint.z = a_fRadius * sin((float)i / a_nSubdivisions * (2 * PI));
+
+		//top left of quad
+		vector3 thirdPoint = firstPoint + topPoint;
+		//top right of quad
+		vector3 fourthPoint = secondPoint + topPoint;
+
+		//move everything down to center it
+		//dont have to move 3&4 because they're already moved down when top and base point are
+		firstPoint -= halfHeight;
+		secondPoint -= halfHeight;
+
+		//makes one side
+		AddQuad(firstPoint, secondPoint, thirdPoint, fourthPoint);
+		//bottom side
+		AddTri(firstPoint, basePoint, secondPoint);
+		//top side
+		AddTri(fourthPoint, topPoint, thirdPoint);
+
+
+	}	// -------------------------------
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -330,7 +406,76 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	//get half of the height, used to move it down to center it in ring
+	vector3 halfHeight(0, a_fHeight / 2, 0);
+	//the tip of the cone
+	vector3 topCenter(0, a_fHeight, 0);
+	//the center point on the bottom of the cone
+	vector3 bottomCenter(0, 0, 0);
+
+	//move the top and bottom down by half the height, to center it
+	topCenter -= halfHeight;
+	bottomCenter -= halfHeight;
+
+	//generate a tri for each subdivision
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		//makes a circle in the x/z plane and uses the top as the third triangle
+		//also generates another triangle to connect the base using same points from that circle
+
+		//OUTER POINTS
+		//bottom left of quad
+		vector3 outerFirstPoint;
+		outerFirstPoint.x = a_fOuterRadius * cos((float)(i + 1) / a_nSubdivisions * (2 * PI));
+		outerFirstPoint.z = a_fOuterRadius * sin((float)(i + 1) / a_nSubdivisions * (2 * PI));
+
+		//bottom right of quad
+		vector3 outerSecondPoint;
+		outerSecondPoint.x = a_fOuterRadius * cos((float)i / a_nSubdivisions * (2 * PI));
+		outerSecondPoint.z = a_fOuterRadius * sin((float)i / a_nSubdivisions * (2 * PI));
+
+		//top left of quad
+		vector3 outerThirdPoint = outerFirstPoint + topCenter;
+		//top right of quad
+		vector3 outerFourthPoint = outerSecondPoint + topCenter;
+
+		//move everything down to center it
+		//dont have to move 3&4 because they're already moved down when top and base point are
+		outerFirstPoint -= halfHeight;
+		outerSecondPoint -= halfHeight;
+
+
+		//INNER POINTS
+		//Does the same thing but with the inner radius instead
+		vector3 innerFirstPoint;
+		innerFirstPoint.x = a_fInnerRadius * cos((float)(i) / a_nSubdivisions * (2 * PI));
+		innerFirstPoint.z = a_fInnerRadius * sin((float)(i) / a_nSubdivisions * (2 * PI));
+
+		vector3 innerSecondPoint;
+		innerSecondPoint.x = a_fInnerRadius * cos((float)(i + 1) / a_nSubdivisions * (2 * PI));
+		innerSecondPoint.z = a_fInnerRadius * sin((float)(i + 1) / a_nSubdivisions * (2 * PI));
+
+		vector3 innerThirdPoint = innerFirstPoint + topCenter;
+		vector3 innerFourthPoint = innerSecondPoint + topCenter;
+		innerFirstPoint -= halfHeight;
+		innerSecondPoint -= halfHeight;
+
+		//makes outer side
+		AddQuad(outerFirstPoint, outerSecondPoint, outerThirdPoint, outerFourthPoint);
+
+		//makes inner side
+		AddQuad(innerFirstPoint, innerSecondPoint, innerThirdPoint, innerFourthPoint);
+
+
+		//these weren't working how I thought with quads so I did it manually
+		//bottom side
+		AddTri(outerFirstPoint, innerSecondPoint, innerFirstPoint);
+		AddTri(innerFirstPoint, outerSecondPoint, outerFirstPoint);
+		//top side
+		AddTri(innerThirdPoint, innerFourthPoint, outerThirdPoint);
+		AddTri(outerThirdPoint, outerFourthPoint, innerThirdPoint);
+
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -380,14 +525,99 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		GenerateCube(a_fRadius * 2.0f, a_v3Color);
 		return;
 	}
-	if (a_nSubdivisions > 6)
+	if (a_nSubdivisions < 6)
 		a_nSubdivisions = 6;
 
 	Release();
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	vector3 top(0, a_fRadius, 0);
+	vector3 bottom(-top);
+
+	std::vector<vector3> vertices;
+	//each row
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		//angle between slices
+		float theta = i * PI / a_nSubdivisions;
+
+		float sTheta = sin(theta);
+		float cTheta = cos(theta);
+		
+		//each slice
+		for (int j = 0; j < a_nSubdivisions; j++)
+		{
+			//calculate points in spherical coordinates
+			float phi = j * 2 * PI / a_nSubdivisions;
+			float sPhi = sin(phi);
+			float cPhi = cos(phi);
+
+			//convert to cartesian coordinates
+			float x = cPhi * sTheta;
+			float y = cTheta;
+			float z = sPhi * sTheta;
+
+			vector3 points = vector3(a_fRadius * x, a_fRadius * y, a_fRadius * z);
+			vertices.push_back(points);
+		}
+	}
+
+	//loop through all vertices to make tris
+	for (int i = a_nSubdivisions; i < vertices.size(); i++)
+	{
+		//if the first row next to the top
+		if (i >= a_nSubdivisions && i < a_nSubdivisions * 2)
+		{
+			//if not the last slice in the row
+			if ((i + 1) % a_nSubdivisions != 0)
+			{
+				AddTri(vertices[i], top, vertices[i + 1]);
+			}
+			else//if it is the last slice
+			{
+				AddTri(vertices[i], top, vertices[i - a_nSubdivisions + 1]);
+			}
+		}
+		else if (i >= vertices.size() - a_nSubdivisions)//if the last row next to the bottom
+		{
+			if ((i + 1) % a_nSubdivisions != 0)//if not the last slice in the row
+			{
+				//connect to bottom
+				AddTri(vertices[i + 1], bottom, vertices[i]);
+
+				//connect to row above this one
+				AddTri(vertices[i], vertices[i - a_nSubdivisions], vertices[i + 1]);
+				AddTri(vertices[i - a_nSubdivisions + 1], vertices[i + 1], vertices[i - a_nSubdivisions]);
+			}
+			else//is last slice
+			{
+				//connect to bottom
+				AddTri(vertices[i - a_nSubdivisions + 1], bottom, vertices[i]);
+
+				//connect this vert to the first vert in row and the one directly above this one
+				AddTri(vertices[i], vertices[i - a_nSubdivisions], vertices[i - a_nSubdivisions + 1]);
+				AddTri(vertices[i - a_nSubdivisions], vertices[i - (2 * a_nSubdivisions) + 1], vertices[i - a_nSubdivisions + 1]);
+			}
+		}
+		else//if a middle row, not connected to top or bottom
+		{
+			if ((i + 1) % a_nSubdivisions != 0)//if not last slice in row
+			{
+				//connect this vert to the next vert and the one directly above this one
+				AddTri(vertices[i], vertices[i - a_nSubdivisions], vertices[i + 1]);
+
+				//connect the next vert, the vert above it, and the vert above this one
+				AddTri(vertices[i - a_nSubdivisions + 1], vertices[i + 1], vertices[i - a_nSubdivisions]);
+			}
+			else//if is last slice in row
+			{
+				//connect this vert to the first vert in row and the one directly above this one
+				AddTri(vertices[i], vertices[i - a_nSubdivisions], vertices[i - a_nSubdivisions + 1]);
+				AddTri(vertices[i - a_nSubdivisions], vertices[i - (2 * a_nSubdivisions) + 1], vertices[i - a_nSubdivisions + 1]);
+			}
+		}
+	}
 	// -------------------------------
 
 	// Adding information about color
