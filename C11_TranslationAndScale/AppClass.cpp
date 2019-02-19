@@ -5,8 +5,8 @@ void Application::InitVariables(void)
 	m_pMesh = new MyMesh();
 	m_pMesh2 = new MyMesh();
 	//m_pMesh->GenerateCube(1.0f, C_WHITE);
-	m_pMesh->GenerateSphere(1.0f, 5, C_WHITE);
-	m_pMesh2->GenerateTorus(1, .5, 12, 12, C_PURPLE);
+	m_pMesh->GenerateCone(1, 2, 12, C_PURPLE);
+	//m_pMesh2->GenerateTorus(1, .5, 12, 12, C_PURPLE);
 	m_pCameraMngr->SetPositionTargetAndUpward(vector3(0, 0, 5), vector3(0, 0, 0), AXIS_Y);
 }
 void Application::Update(void)
@@ -24,7 +24,7 @@ void Application::Display(void)
 {
 	// Clear the screen
 	ClearScreen();
-
+	static float fRot = 0.0f;
 	matrix4 m4View = m_pCameraMngr->GetViewMatrix();
 	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix();
 	/*
@@ -34,8 +34,8 @@ void Application::Display(void)
 	value += 0.01f;
 	*/
 	
-	matrix4 m4Model;
-
+	matrix4 m4Model = glm::rotate(IDENTITY_M4, glm::radians(fRot), vector3(0.0f, 0.0f, 1.0f));
+	fRot += 0.01f;
 	/*uint uClock = m_pSystem->GenClock();
 	float fDeltaTime = m_pSystem->GetDeltaTime(uClock);
 	std::cout << fDeltaTime << std::endl;
@@ -47,7 +47,7 @@ void Application::Display(void)
 	//matrix4 m4Trans = glm::translate(vector3(1, 0, 0));
 	static float fTransX = 0.0f;
 	matrix4 m4Trans = glm::translate(IDENTITY_M4, vector3(fTransX, 0, 0));
-	fTransX += 0.01f;
+	fTransX += 1.0f;
 
 	/*
 	//modify matrix directly
@@ -73,9 +73,11 @@ void Application::Display(void)
 
 	//glm for scaling
 	matrix4 m4Scale = glm::scale(m4Trans, vector3(1));
-	m_pMesh->Render(m4Projection, m4View, m4Scale);
-	m4Scale = glm::scale(m4Trans, vector3(4));
-	m_pMesh2->Render(m4Projection, m4View, m4Scale);
+	//m_pMesh->Render(m4Projection, m4View, m4Scale);
+	//m4Scale = glm::scale(m4Trans, vector3(4));
+	//m_pMesh2->Render(m4Projection, m4View, m4Scale);
+
+	m_pMesh->Render(m4Projection, m4View, m4Model);
 
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
