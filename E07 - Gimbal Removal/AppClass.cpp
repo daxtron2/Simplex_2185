@@ -25,9 +25,20 @@ void Application::Display(void)
 	matrix4 m4View = m_pCameraMngr->GetViewMatrix();
 	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix();
 
-	m_m4Model = glm::rotate(IDENTITY_M4, glm::radians(m_v3Rotation.x), vector3(1.0f, 0.0f, 0.0f));
-	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.y), vector3(0.0f, 1.0f, 0.0f));
-	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.z), vector3(0.0f, 0.0f, 1.0f));
+	//m_m4Model = glm::rotate(IDENTITY_M4, glm::radians(m_v3Rotation.x), vector3(1.0f, 0.0f, 0.0f));
+	//m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.y), vector3(0.0f, 1.0f, 0.0f));
+	//m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.z), vector3(0.0f, 0.0f, 1.0f));
+	static quaternion currRot;
+
+	currRot *= glm::angleAxis(glm::radians(m_v3Rotation.x), vector3(1.f, 0.f, 0.f));
+	currRot *= glm::angleAxis(glm::radians(m_v3Rotation.y), vector3(0.f, 1.f, 0.f));
+	currRot *= glm::angleAxis(glm::radians(m_v3Rotation.z), vector3(0.f, 0.f, 1.f));
+
+
+	//std::cout << "x|: " << quatX.x << "   y|: " << quatY.y << "    z|: " << quatZ.z << std::endl;
+
+	m_m4Model = ToMatrix4(currRot);
+	
 	m_pMesh->Render(m4Projection, m4View, ToMatrix4(m_m4Model));
 
 	//m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(1.0f), vector3(1.0f));
