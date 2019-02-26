@@ -369,7 +369,9 @@ void Application::CameraRotation(float a_fSpeed)
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
 
-	//m_pCamera->RotateCamera(fAngleX,fAngleY);
+	//Change the Yaw and the Pitch of the camera
+	m_pCamera->ChangeYaw(fAngleY);
+	m_pCamera->ChangePitch(-fAngleX);
 
 	/*quaternion pitch = glm::angleAxis(glm::radians(-fAngleX), vector3(1.f, 0.f, 0.f));
 	quaternion yaw = glm::angleAxis(glm::radians(fAngleY), vector3(0.f, 1.f, 0.f));
@@ -403,7 +405,7 @@ void Application::ProcessKeyboard(void)
 	{
 		m_pCamera->MoveForward(-fSpeed);
 	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 	{
 		//std::cout << "left-";
 		m_pCamera->MoveSideways(fSpeed);
@@ -413,7 +415,7 @@ void Application::ProcessKeyboard(void)
 		//std::cout << "right-";
 		m_pCamera->MoveSideways(-fSpeed);
 	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
 	{
 		m_pCamera->MoveVertical(fSpeed);
 	}
@@ -421,12 +423,13 @@ void Application::ProcessKeyboard(void)
 	{
 		m_pCamera->MoveVertical(-fSpeed);
 	}
+
 	//testing purposes TODO delete
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
 	{
 		m_pCamera->SetTarget(vector3(1, 0, 0) + m_pCamera->GetPosition());
 	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+	/*else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 	{
 		m_pCamera->RotateCamera(0, 1);
 	}
@@ -441,7 +444,7 @@ void Application::ProcessKeyboard(void)
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 	{
 		m_pCamera->RotateCamera(-1, 0);
-	}
+	}*/
 
 #pragma endregion
 }

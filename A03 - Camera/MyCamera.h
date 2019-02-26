@@ -19,6 +19,7 @@ class MyCamera
 	bool m_bPerspective = true; //perspective view? False is Orthographic
 
 	float m_fFOV = 45.0f; //Field of View
+	float m_fCameraSensitivity = 5.f; //faster turning speed
 
 	vector2 m_v2Resolution = vector2(1280.0f, 720.0f); //Resolution of the window
 	vector2 m_v2NearFar = vector2(0.001f, 1000.0f); //Near and Far planes
@@ -231,7 +232,10 @@ public:
 	*/
 	void MoveSideways(float a_fDistance = 0.1f);
 
-	void RotateCamera(float yaw, float pitch);
+	void ChangePitch(float angle);
+	void ChangeYaw(float angle);
+
+	//void RotateCamera(float yaw, float pitch);
 };
 
 } //namespace Simplex

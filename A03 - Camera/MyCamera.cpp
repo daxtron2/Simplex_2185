@@ -155,42 +155,69 @@ void MyCamera::MoveForward(float a_fDistance)
 	vector3 forward = m_v3Target - m_v3Position;
 
 	m_v3Position += forward * a_fDistance;
-	m_v3Target += forward * a_fDistance;  
-	m_v3Above += forward * a_fDistance;   
+	m_v3Target += forward * a_fDistance;
+	m_v3Above += forward * a_fDistance;
 }
 
 void MyCamera::MoveVertical(float a_fDistance)
 {
-	m_v3Position += vector3(0, -a_fDistance, 0);
-	m_v3Target += vector3(0, -a_fDistance, 0);
-	m_v3Above += vector3(0, -a_fDistance, 0);
+	m_v3Position += vector3(0.f, -a_fDistance, 0.f);
+	m_v3Target += vector3(0.f, -a_fDistance, 0.f);
+	m_v3Above += vector3(0.f, -a_fDistance, 0.f);
 }
 
 void MyCamera::MoveSideways(float a_fDistance)
 {
 	vector3 forward = m_v3Target - m_v3Position;
-	vector3 right = glm::cross(forward, vector3(0,1,0));
+	vector3 right = glm::cross(forward, vector3(0.f, 1.f, 0.f));
 
 	m_v3Position += right * -a_fDistance;
 	m_v3Target += right * -a_fDistance;
 	m_v3Above += right * -a_fDistance;
 }
 
-void MyCamera::RotateCamera(float yaw, float pitch)
+//rotate target around camera right axis
+void MyCamera::ChangePitch(float angle)
 {
-	/*quaternion currRot;
-	currRot *= glm::angleAxis(glm::radians(pitch), vector3(1.f, 0.f, 0.f));
-	currRot *= glm::angleAxis(glm::radians(yaw), vector3(0.f, 1.f, 0.f));
-	currRot = glm::normalize(currRot);
+	vector3 forward = m_v3Target - m_v3Position;
+	//std::cout << "fwd x: " << forward.x << "\ty:" << forward.y << "\tz:" << forward.z << std::endl;
+	vector3 right = glm::cross(forward, vector3(0.f, 1.f, 0.f));
 
-	vector3 newTarget = m_v3Target - m_v3Position;
-	newTarget = currRot * newTarget;
-	std::cout << "x: " << newTarget.x << " \ty:" << newTarget.y << " \tz:" << newTarget.z << std::endl;
-	vector3 right = glm::cross(newTarget, vector3(0, -1, 0));
-	vector3 up = glm::cross(newTarget, right);
-	newTarget += m_v3Position;
+	vector3 tgt = GetTarget() - GetPosition();
+	quaternion quat = glm::angleAxis(glm::radians(angle * m_fCameraSensitivity), right);
+	tgt = glm::normalize(quat * tgt);
+	tgt = tgt + GetPosition();
 
-	SetPositionTargetAndUpward(m_v3Position, newTarget, up);*/
+	SetTarget(tgt);
+}
+//rotate target around camera up axis
+void MyCamera::ChangeYaw(float angle)
+{
+	vector3 up = vector3(0.f, 1.f, 0.f);
+
+	vector3 tgt = GetTarget() - GetPosition();
+	quaternion quat = glm::angleAxis(glm::radians(angle * m_fCameraSensitivity), up);
+	tgt = glm::normalize(quat * tgt);
+	tgt = tgt + GetPosition();
+
+	SetTarget(tgt);
+}
+
+/*void MyCamera::RotateCamera(float yaw, float pitch)
+{
+	//quaternion currRot;
+	//currRot *= glm::angleAxis(glm::radians(pitch), vector3(1.f, 0.f, 0.f));
+	//currRot *= glm::angleAxis(glm::radians(yaw), vector3(0.f, 1.f, 0.f));
+	//currRot = glm::normalize(currRot);
+
+	//vector3 newTarget = m_v3Target - m_v3Position;
+	//newTarget = currRot * newTarget;
+	//std::cout << "x: " << newTarget.x << " \ty:" << newTarget.y << " \tz:" << newTarget.z << std::endl;
+	//vector3 right = glm::cross(newTarget, vector3(0, -1, 0));
+	//vector3 up = glm::cross(newTarget, right);
+	//newTarget += m_v3Position;
+
+	//SetPositionTargetAndUpward(m_v3Position, newTarget, up);
 
 	vector3 direction(
 		cos(pitch) * sin(yaw),
@@ -209,4 +236,4 @@ void MyCamera::RotateCamera(float yaw, float pitch)
 
 	SetTarget(direction);
 	m_v3Above = m_v3Position + glm::normalize(up);
-}
+}*/
