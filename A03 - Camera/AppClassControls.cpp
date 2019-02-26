@@ -8,7 +8,7 @@ void Application::ProcessMouseMovement(sf::Event a_event)
 	sf::Vector2i window = m_pWindow->getPosition();
 	m_v3Mouse.x = static_cast<float>(mouse.x - window.x);
 	m_v3Mouse.y = static_cast<float>(mouse.y - window.y);
-	if(!m_pSystem->IsWindowFullscreen() && !m_pSystem->IsWindowBorderless())
+	if (!m_pSystem->IsWindowFullscreen() && !m_pSystem->IsWindowBorderless())
 		m_v3Mouse += vector3(-8.0f, -32.0f, 0.0f);
 	gui.io.MousePos = ImVec2(m_v3Mouse.x, m_v3Mouse.y);
 }
@@ -368,7 +368,16 @@ void Application::CameraRotation(float a_fSpeed)
 		fDeltaMouse = static_cast<float>(MouseY - CenterY);
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
-	//Change the Yaw and the Pitch of the camera
+
+	//m_pCamera->RotateCamera(fAngleX,fAngleY);
+
+	/*quaternion pitch = glm::angleAxis(glm::radians(-fAngleX), vector3(1.f, 0.f, 0.f));
+	quaternion yaw = glm::angleAxis(glm::radians(fAngleY), vector3(0.f, 1.f, 0.f));
+	quaternion rot = pitch * yaw;
+	vector3 target = rot * (m_pCamera->GetTarget() - m_pCamera->GetPosition());
+	std::cout << "x: " << target.x << "\ty:" << target.y << "\tz" << target.z << std::endl;
+	m_pCamera->SetTarget(target + m_pCamera->GetPosition());*/
+
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
 //Keyboard
@@ -387,9 +396,53 @@ void Application::ProcessKeyboard(void)
 		fSpeed *= 5.0f;
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+	{
 		m_pCamera->MoveForward(fSpeed);
+	}
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+	{
 		m_pCamera->MoveForward(-fSpeed);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	{
+		//std::cout << "left-";
+		m_pCamera->MoveSideways(fSpeed);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	{
+		//std::cout << "right-";
+		m_pCamera->MoveSideways(-fSpeed);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+	{
+		m_pCamera->MoveVertical(fSpeed);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+	{
+		m_pCamera->MoveVertical(-fSpeed);
+	}
+	//testing purposes TODO delete
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+	{
+		m_pCamera->SetTarget(vector3(1, 0, 0) + m_pCamera->GetPosition());
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+	{
+		m_pCamera->RotateCamera(0, 1);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+	{
+		m_pCamera->RotateCamera(0, -1);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+	{
+		m_pCamera->RotateCamera(1, 0);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+	{
+		m_pCamera->RotateCamera(-1, 0);
+	}
+
 #pragma endregion
 }
 //Joystick

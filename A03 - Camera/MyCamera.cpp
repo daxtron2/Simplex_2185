@@ -78,7 +78,7 @@ void Simplex::MyCamera::Swap(MyCamera & other)
 	std::swap(m_v3Position, other.m_v3Position);
 	std::swap(m_v3Target, other.m_v3Target);
 	std::swap(m_v3Above, other.m_v3Above);
-	
+
 	std::swap(m_bPerspective, other.m_bPerspective);
 
 	std::swap(m_fFOV, other.m_fFOV);
@@ -124,7 +124,7 @@ void Simplex::MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3
 	m_v3Target = a_v3Target;
 
 	m_v3Above = a_v3Position + glm::normalize(a_v3Upward);
-	
+
 	//Calculate the Matrix
 	CalculateProjectionMatrix();
 }
@@ -152,11 +152,61 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 
 void MyCamera::MoveForward(float a_fDistance)
 {
-	//The following is just an example and does not take in account the forward vector (AKA view vector)
-	m_v3Position += vector3(0.0f, 0.0f,-a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
-	m_v3Above += vector3(0.0f, 0.0f, -a_fDistance);
+	vector3 forward = m_v3Target - m_v3Position;
+
+	m_v3Position += forward * a_fDistance;
+	m_v3Target += forward * a_fDistance;  
+	m_v3Above += forward * a_fDistance;   
 }
 
-void MyCamera::MoveVertical(float a_fDistance){}//Needs to be defined
-void MyCamera::MoveSideways(float a_fDistance){}//Needs to be defined
+void MyCamera::MoveVertical(float a_fDistance)
+{
+	m_v3Position += vector3(0, -a_fDistance, 0);
+	m_v3Target += vector3(0, -a_fDistance, 0);
+	m_v3Above += vector3(0, -a_fDistance, 0);
+}
+
+void MyCamera::MoveSideways(float a_fDistance)
+{
+	vector3 forward = m_v3Target - m_v3Position;
+	vector3 right = glm::cross(forward, vector3(0,1,0));
+
+	m_v3Position += right * -a_fDistance;
+	m_v3Target += right * -a_fDistance;
+	m_v3Above += right * -a_fDistance;
+}
+
+void MyCamera::RotateCamera(float yaw, float pitch)
+{
+	/*quaternion currRot;
+	currRot *= glm::angleAxis(glm::radians(pitch), vector3(1.f, 0.f, 0.f));
+	currRot *= glm::angleAxis(glm::radians(yaw), vector3(0.f, 1.f, 0.f));
+	currRot = glm::normalize(currRot);
+
+	vector3 newTarget = m_v3Target - m_v3Position;
+	newTarget = currRot * newTarget;
+	std::cout << "x: " << newTarget.x << " \ty:" << newTarget.y << " \tz:" << newTarget.z << std::endl;
+	vector3 right = glm::cross(newTarget, vector3(0, -1, 0));
+	vector3 up = glm::cross(newTarget, right);
+	newTarget += m_v3Position;
+
+	SetPositionTargetAndUpward(m_v3Position, newTarget, up);*/
+
+	vector3 direction(
+		cos(pitch) * sin(yaw),
+		sin(pitch),
+		cos(pitch) * cos(yaw)
+	);
+
+	// Right vector
+	vector3 right = vector3(
+		sin(yaw - 3.14f / 2.0f),
+		0,
+		cos(yaw - 3.14f / 2.0f)
+	);
+
+	vector3 up = glm::cross(right, direction);
+
+	SetTarget(direction);
+	m_v3Above = m_v3Position + glm::normalize(up);
+}
