@@ -1,3 +1,5 @@
+/// Assignment 3 - Camera
+/// TJ Wolschon
 #include "MyCamera.h"
 using namespace Simplex;
 
@@ -152,15 +154,22 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 
 void MyCamera::MoveForward(float a_fDistance)
 {
+	//get our forward vector in local space
 	vector3 forward = m_v3Target - m_v3Position;
 
+	//move in the direction of our forward
 	m_v3Position += forward * a_fDistance;
+	
+	//update our target in the direction of our forward
 	m_v3Target += forward * a_fDistance;
+
+	//update the above in direction of our forward
 	m_v3Above += forward * a_fDistance;
 }
 
 void MyCamera::MoveVertical(float a_fDistance)
 {
+	//move in the y direction
 	m_v3Position += vector3(0.f, -a_fDistance, 0.f);
 	m_v3Target += vector3(0.f, -a_fDistance, 0.f);
 	m_v3Above += vector3(0.f, -a_fDistance, 0.f);
@@ -169,8 +178,11 @@ void MyCamera::MoveVertical(float a_fDistance)
 void MyCamera::MoveSideways(float a_fDistance)
 {
 	vector3 forward = m_v3Target - m_v3Position;
-	vector3 right = glm::cross(forward, vector3(0.f, 1.f, 0.f));
+	
+	//get our right vector, the cross between y axis and forward vector
+	vector3 right = glm::cross(forward, AXIS_Y);
 
+	//move in the direction of our right vector
 	m_v3Position += right * -a_fDistance;
 	m_v3Target += right * -a_fDistance;
 	m_v3Above += right * -a_fDistance;
@@ -179,27 +191,46 @@ void MyCamera::MoveSideways(float a_fDistance)
 //rotate target around camera right axis
 void MyCamera::ChangePitch(float angle)
 {
+	//get our forward vector which is just our target moved to the origin
 	vector3 forward = m_v3Target - m_v3Position;
 	//std::cout << "fwd x: " << forward.x << "\ty:" << forward.y << "\tz:" << forward.z << std::endl;
-	vector3 right = glm::cross(forward, vector3(0.f, 1.f, 0.f));
+	
+	//find our right vector which is the cross product of our forward and the y axis
+	vector3 right = glm::cross(forward, AXIS_Y);
 
-	vector3 tgt = GetTarget() - GetPosition();
+	//setup a new target vector to be rotated
+	vector3 tgt = forward;
+
+	//using the given angle, setup a quaternion on the right axis
 	quaternion quat = glm::angleAxis(glm::radians(angle * m_fCameraSensitivity), right);
+
+	//rotate our vector in the orientation of that quaternion, and normalize it
 	tgt = glm::normalize(quat * tgt);
+
+	//move it back in front of us
 	tgt = tgt + GetPosition();
 
+	//set it as the target to be looked at
 	SetTarget(tgt);
 }
 //rotate target around camera up axis
 void MyCamera::ChangeYaw(float angle)
 {
-	vector3 up = vector3(0.f, 1.f, 0.f);
+	vector3 up = AXIS_Y;
 
+	//setup a target vector which is the same as the forward vector at the origin
 	vector3 tgt = GetTarget() - GetPosition();
+
+	//using the given angle, setup a quaternion on the up axis
 	quaternion quat = glm::angleAxis(glm::radians(angle * m_fCameraSensitivity), up);
+
+	//rotate our vector in the orientation of that quaternion, and normalize it
 	tgt = glm::normalize(quat * tgt);
+
+	//move it back in front of us
 	tgt = tgt + GetPosition();
 
+	//set it as the target to be looked at
 	SetTarget(tgt);
 }
 

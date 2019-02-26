@@ -1,7 +1,5 @@
-/*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@gmail.com)
-Date: 2018/09
-----------------------------------------------*/
+/// Assignment 3 - Camera
+/// TJ Wolschon
 #ifndef __MYCAMERACLASS_H_
 #define __MYCAMERACLASS_H_
 

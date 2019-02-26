@@ -1,3 +1,5 @@
+/// Assignment 3 - Camera
+/// TJ Wolschon
 #include "AppClass.h"
 using namespace Simplex;
 //Mouse
@@ -397,6 +399,7 @@ void Application::ProcessKeyboard(void)
 	if (fMultiplier)
 		fSpeed *= 5.0f;
 
+	//basic WASD controls, Q/E for vertical movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 	{
 		m_pCamera->MoveForward(fSpeed);
@@ -425,10 +428,10 @@ void Application::ProcessKeyboard(void)
 	}
 
 	//testing purposes TODO delete
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+	/*if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
 	{
 		m_pCamera->SetTarget(vector3(1, 0, 0) + m_pCamera->GetPosition());
-	}
+	}*/
 	/*else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 	{
 		m_pCamera->RotateCamera(0, 1);

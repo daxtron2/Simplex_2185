@@ -1,7 +1,5 @@
-/*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@gmail.com)
-Date: 2017/05
-----------------------------------------------*/
+/// Assignment 3 - Camera
+/// TJ Wolschon
 #ifndef __APPLICATIONCLASS_H_
 #define __APPLICATIONCLASS_H_
 
