@@ -233,38 +233,3 @@ void MyCamera::ChangeYaw(float angle)
 	//set it as the target to be looked at
 	SetTarget(tgt);
 }
-
-/*void MyCamera::RotateCamera(float yaw, float pitch)
-{
-	//quaternion currRot;
-	//currRot *= glm::angleAxis(glm::radians(pitch), vector3(1.f, 0.f, 0.f));
-	//currRot *= glm::angleAxis(glm::radians(yaw), vector3(0.f, 1.f, 0.f));
-	//currRot = glm::normalize(currRot);
-
-	//vector3 newTarget = m_v3Target - m_v3Position;
-	//newTarget = currRot * newTarget;
-	//std::cout << "x: " << newTarget.x << " \ty:" << newTarget.y << " \tz:" << newTarget.z << std::endl;
-	//vector3 right = glm::cross(newTarget, vector3(0, -1, 0));
-	//vector3 up = glm::cross(newTarget, right);
-	//newTarget += m_v3Position;
-
-	//SetPositionTargetAndUpward(m_v3Position, newTarget, up);
-
-	vector3 direction(
-		cos(pitch) * sin(yaw),
-		sin(pitch),
-		cos(pitch) * cos(yaw)
-	);
-
-	// Right vector
-	vector3 right = vector3(
-		sin(yaw - 3.14f / 2.0f),
-		0,
-		cos(yaw - 3.14f / 2.0f)
-	);
-
-	vector3 up = glm::cross(right, direction);
-
-	SetTarget(direction);
-	m_v3Above = m_v3Position + glm::normalize(up);
-}*/

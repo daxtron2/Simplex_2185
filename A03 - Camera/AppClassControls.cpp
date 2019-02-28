@@ -375,12 +375,6 @@ void Application::CameraRotation(float a_fSpeed)
 	m_pCamera->ChangeYaw(fAngleY);
 	m_pCamera->ChangePitch(-fAngleX);
 
-	/*quaternion pitch = glm::angleAxis(glm::radians(-fAngleX), vector3(1.f, 0.f, 0.f));
-	quaternion yaw = glm::angleAxis(glm::radians(fAngleY), vector3(0.f, 1.f, 0.f));
-	quaternion rot = pitch * yaw;
-	vector3 target = rot * (m_pCamera->GetTarget() - m_pCamera->GetPosition());
-	std::cout << "x: " << target.x << "\ty:" << target.y << "\tz" << target.z << std::endl;
-	m_pCamera->SetTarget(target + m_pCamera->GetPosition());*/
 
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
