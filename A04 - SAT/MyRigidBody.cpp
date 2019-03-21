@@ -76,6 +76,34 @@ vector3 MyRigidBody::GetMinGlobal(void) { return m_v3MinG; }
 vector3 MyRigidBody::GetMaxGlobal(void) { return m_v3MaxG; }
 vector3 MyRigidBody::GetHalfWidth(void) { return m_v3HalfWidth; }
 matrix4 MyRigidBody::GetModelMatrix(void) { return m_m4ToWorld; }
+vector3 MyRigidBody::c() { return GetCenterGlobal(); }
+std::vector<vector3> MyRigidBody::u()
+{
+	matrix4 toWorld = GetModelMatrix();
+	
+	vector3 scale = ZERO_V3;
+	quaternion orientation = IDENTITY_QUAT;
+	vector3 translation = ZERO_V3;
+	vector3 skew = ZERO_V3;
+	vector4 perspective = vector4(0);
+	
+	glm::decompose(toWorld, scale, orientation, translation, skew, perspective);
+
+	std::vector<vector3> axes;
+	
+	axes.push_back(vector3(toWorld * vector4(AXIS_X, 1)) - translation);
+	axes.push_back(vector3(toWorld * vector4(AXIS_Y, 1)) - translation);
+	axes.push_back(vector3(toWorld * vector4(AXIS_Z, 1)) - translation);	
+
+	//debug draw
+	//m_pMeshMngr->AddLineToRenderList(IDENTITY_M4, vector3(0), axes[0], C_RED, C_RED);
+	//m_pMeshMngr->AddLineToRenderList(IDENTITY_M4, vector3(0), axes[1], C_GREEN, C_GREEN);
+	//m_pMeshMngr->AddLineToRenderList(IDENTITY_M4, vector3(0), axes[2], C_BLUE, C_BLUE);
+
+
+	return axes;
+}
+vector3 MyRigidBody::e() { return GetHalfWidth(); }
 void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 {
 	//to save some calculations if the model matrix is the same there is nothing to do here
@@ -228,12 +256,45 @@ bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 {
 	//check if spheres are colliding as pre-test
 	bool bColliding = (glm::distance(GetCenterGlobal(), a_pOther->GetCenterGlobal()) < m_fRadius + a_pOther->m_fRadius);
-	
+
 	//if they are colliding check the SAT
-	if (bColliding)
+	int satNum = SAT(a_pOther);
+	if (satNum != eSATResults::SAT_NONE)
 	{
-		if(SAT(a_pOther) != eSATResults::SAT_NONE)
-			bColliding = false;// reset to false
+		bColliding = false;// reset to false
+		//color the plane based on if it's x, y or z
+		vector3 color;
+		switch (satNum)
+		{
+		case eSATResults::SAT_AX:
+		case eSATResults::SAT_BX:
+		case eSATResults::SAT_AXxBX:
+		case eSATResults::SAT_AXxBY:
+		case eSATResults::SAT_AXxBZ:
+			color = C_RED;
+			break;
+		case eSATResults::SAT_AY:
+		case eSATResults::SAT_BY:
+		case eSATResults::SAT_AYxBX:
+		case eSATResults::SAT_AYxBY:
+		case eSATResults::SAT_AYxBZ:
+			color = C_GREEN;
+			break;
+		case eSATResults::SAT_AZ:
+		case eSATResults::SAT_BZ:
+		case eSATResults::SAT_AZxBX:
+		case eSATResults::SAT_AZxBY:
+		case eSATResults::SAT_AZxBZ:
+			color = C_BLUE;
+			break;
+		}
+
+		vector3 point = (GetCenterGlobal() + a_pOther->GetCenterGlobal()) / 2;
+
+		//plane = glm::lookAt(point, a_pOther->GetCenterGlobal(), vector3(GetModelMatrix() * vector4(AXIS_Y, 1)));
+		matrix4 plane = glm::translate(IDENTITY_M4, point);
+
+		m_pMeshMngr->AddPlaneToRenderList(plane, color);
 	}
 
 	if (bColliding) //they are colliding
@@ -276,17 +337,104 @@ void MyRigidBody::AddToRenderList(void)
 
 uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
-	/*
-	Your code goes here instead of this comment;
+	MyRigidBody* thisOBB = this;
+	MyRigidBody* otherOBB = a_pOther;
 
-	For this method, if there is an axis that separates the two objects
-	then the return will be different than 0; 1 for any separating axis
-	is ok if you are not going for the extra credit, if you could not
-	find a separating axis you need to return 0, there is an enum in
-	Simplex that might help you [eSATResults] feel free to use it.
-	(eSATResults::SAT_NONE has a value of 0)
-	*/
 
-	//there is no axis test that separates this two objects
+	float rThis, rOther;
+	matrix3 rotation, absRotation;
+
+	// Compute rotation matrix expressing otherOBB in thisOBB's coordinate frame
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			rotation[i][j] = glm::dot(thisOBB->u()[i], otherOBB->u()[j]);
+
+	// Compute translation vector translation
+	vector3 translation = otherOBB->c() - thisOBB->c();
+	// Bring translation into thisOBB's coordinate frame
+	translation = vector3(glm::dot(translation, thisOBB->u()[0]), 
+						  glm::dot(translation, thisOBB->u()[1]), 
+						  glm::dot(translation, thisOBB->u()[2]));
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			absRotation[i][j] = abs(rotation[i][j]) + FLT_EPSILON;
+
+	// Test axes L = A0, L = A1, L = A2
+	for (int i = 0; i < 3; i++)
+	{
+		rThis = thisOBB->e()[i];
+		rOther = otherOBB->e()[0] * absRotation[i][0] + otherOBB->e()[1] * absRotation[i][1] + otherOBB->e()[2] * absRotation[i][2];
+		if (abs(translation[i]) > rThis + rOther) 
+			return i+1;
+	}
+
+	// Test axes L = B0, L = B1, L = B2
+	for (int i = 0; i < 3; i++)
+	{
+		rThis = thisOBB->e()[0] * absRotation[0][i] + thisOBB->e()[1] * absRotation[1][i] + thisOBB->e()[2] * absRotation[2][i];
+		rOther = otherOBB->e()[i];
+		if (abs(translation[0] * rotation[0][i] + translation[1] * rotation[1][i] + translation[2] * rotation[2][i]) > rThis + rOther)
+			return i+4;
+	}
+
+	// Test axis L = A0 x B0
+	rThis = thisOBB->e()[1] * absRotation[2][0] + thisOBB->e()[2] * absRotation[1][0];
+	rOther = otherOBB->e()[1] * absRotation[0][2] + otherOBB->e()[2] * absRotation[0][1];
+	if (abs(translation[2] * rotation[1][0] - translation[1] * rotation[2][0]) > rThis + rOther) 
+		return eSATResults::SAT_AXxBX;
+
+	// Test axis L = A0 x B1
+	rThis = thisOBB->e()[1] * absRotation[2][1] + thisOBB->e()[2] * absRotation[1][1];
+	rOther = otherOBB->e()[0] * absRotation[0][2] + otherOBB->e()[2] * absRotation[0][0];
+	if (abs(translation[2] * rotation[1][1] - translation[1] * rotation[2][1]) > rThis + rOther) 
+		return eSATResults::SAT_AXxBY;
+
+	// Test axis L = A0 x B2
+	rThis = thisOBB->e()[1] * absRotation[2][2] + thisOBB->e()[2] * absRotation[1][2];
+	rOther = otherOBB->e()[0] * absRotation[0][1] + otherOBB->e()[1] * absRotation[0][0];
+	if (abs(translation[2] * rotation[1][2] - translation[1] * rotation[2][2]) > rThis + rOther) 
+		return eSATResults::SAT_AXxBZ;
+
+	// Test axis L = A1 x B0
+	rThis = thisOBB->e()[0] * absRotation[2][0] + thisOBB->e()[2] * absRotation[0][0];
+	rOther = otherOBB->e()[1] * absRotation[1][2] + otherOBB->e()[2] * absRotation[1][1];
+
+	if (abs(translation[0] * rotation[2][0] - translation[2] * rotation[0][0]) > rThis + rOther) 
+		return eSATResults::SAT_AYxBX;
+
+	// Test axis L = A1 x B1
+	rThis = thisOBB->e()[0] * absRotation[2][1] + thisOBB->e()[2] * absRotation[0][1];
+	rOther = otherOBB->e()[0] * absRotation[1][2] + otherOBB->e()[2] * absRotation[1][0];
+	if (abs(translation[0] * rotation[2][1] - translation[2] * rotation[0][1]) > rThis + rOther) 
+		return eSATResults::SAT_AYxBY;
+
+	// Test axis L = A1 x B2
+	rThis = thisOBB->e()[0] * absRotation[2][2] + thisOBB->e()[2] * absRotation[0][2];
+	rOther = otherOBB->e()[0] * absRotation[1][1] + otherOBB->e()[1] * absRotation[1][0];
+	if (abs(translation[0] * rotation[2][2] - translation[2] * rotation[0][2]) > rThis + rOther) 
+		return eSATResults::SAT_AYxBZ;
+
+	// Test axis L = A2 x B0
+	rThis = thisOBB->e()[0] * absRotation[1][0] + thisOBB->e()[1] * absRotation[0][0];
+	rOther = otherOBB->e()[1] * absRotation[2][2] + otherOBB->e()[2] * absRotation[2][1];
+	if (abs(translation[1] * rotation[0][0] - translation[0] * rotation[1][0]) > rThis + rOther) 
+		return eSATResults::SAT_AZxBX;
+
+	// Test axis L = A2 x B1
+	rThis = thisOBB->e()[0] * absRotation[1][1] + thisOBB->e()[1] * absRotation[0][1];
+	rOther = otherOBB->e()[0] * absRotation[2][2] + otherOBB->e()[2] * absRotation[2][0];
+	if (abs(translation[1] * rotation[0][1] - translation[0] * rotation[1][1]) > rThis + rOther) 
+		return eSATResults::SAT_AZxBY;
+
+	// Test axis L = A2 x B2
+	rThis = thisOBB->e()[0] * absRotation[1][2] + thisOBB->e()[1] * absRotation[0][2];
+	rOther = otherOBB->e()[0] * absRotation[2][1] + otherOBB->e()[1] * absRotation[2][0];
+	if (abs(translation[1] * rotation[0][2] - translation[0] * rotation[1][2]) > rThis + rOther) 
+		return eSATResults::SAT_AZxBZ;
+
+
+	//there is no axis test that separates this two objects*/
 	return eSATResults::SAT_NONE;
+
 }

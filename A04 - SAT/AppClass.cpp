@@ -3,7 +3,7 @@ using namespace Simplex;
 void Application::InitVariables(void)
 {
 	//Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "TJ Wolschon tjw3948@rit.edu";
 
 	//Set the position and target of the camera
 	m_pCameraMngr->SetPositionTargetAndUpward(
@@ -22,9 +22,12 @@ void Application::InitVariables(void)
 	m_pSteve = new Model();
 	m_pSteve->Load("Minecraft\\Steve.obj");
 	m_pSteveRB = new MyRigidBody(m_pSteve->GetVertexList());
+	
 }
 void Application::Update(void)
 {
+	//std::cout << "Creeper X: " << m_pCreeperRB->GetHalfWidth().x << " Y: " << m_pCreeperRB->GetHalfWidth().y << " Z: " << m_pCreeperRB->GetHalfWidth().z << std::endl;
+	//std::cout << "Steve X: " << m_pSteveRB->GetHalfWidth().x << " Y: " << m_pSteveRB->GetHalfWidth().y << " Z: " << m_pSteveRB->GetHalfWidth().z << std::endl;
 	//Update the system so it knows how much time has passed since the last call
 	m_pSystem->Update();
 

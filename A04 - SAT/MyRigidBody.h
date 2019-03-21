@@ -15,7 +15,7 @@ class MyRigidBody
 {
 	MeshManager* m_pMeshMngr = nullptr; //for displaying the Rigid Body
 
-	bool m_bVisibleBS = false; //Visibility of bounding sphere
+	bool m_bVisibleBS = true; //Visibility of bounding sphere
 	bool m_bVisibleOBB = true; //Visibility of Oriented bounding box
 	bool m_bVisibleARBB = true; //Visibility of axis (Re)aligned bounding box
 
@@ -225,6 +225,10 @@ public:
 	Output: ---
 	*/
 	void SetModelMatrix(matrix4 a_m4ModelMatrix);
+
+	vector3 c();
+	std::vector<vector3> u();
+	vector3 e();
 #pragma endregion
 	
 private:
