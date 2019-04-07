@@ -30,6 +30,7 @@ void Application::InitVariables(void)
 		}
 	}
 	m_uOctantLevels = 1;
+	m_pRoot = new MyOctant(m_uOctantLevels, 5);
 	m_pEntityMngr->Update();
 }
 void Application::Update(void)
@@ -54,8 +55,17 @@ void Application::Display(void)
 	// Clear the screen
 	ClearScreen();
 
-	//display octree
-	//m_pRoot->Display();
+	//if there's a specific one we want to show
+	if (m_uOctantID != (uint)-1)
+	{
+		//display that octant
+		m_pRoot->Display(m_uOctantID);
+	}
+	else
+	{
+		//otherwise draw entire octree
+		m_pRoot->Display();
+	}
 	
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();

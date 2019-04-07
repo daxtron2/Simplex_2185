@@ -262,6 +262,7 @@ bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 	if (satNum != eSATResults::SAT_NONE)
 	{
 		bColliding = false;// reset to false
+
 		//color the plane based on if it's x, y or z
 		vector3 color;
 		switch (satNum)
@@ -289,11 +290,16 @@ bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 			break;
 		}
 
+		//get the midpoint between the two objects
 		vector3 point = (GetCenterGlobal() + a_pOther->GetCenterGlobal()) / 2;
 
+		//tried to rotate in the right way, couldn't figure it out
 		//plane = glm::lookAt(point, a_pOther->GetCenterGlobal(), vector3(GetModelMatrix() * vector4(AXIS_Y, 1)));
+		
+		//move the plane to that midpoint
 		matrix4 plane = glm::translate(IDENTITY_M4, point);
 
+		//draw the plane between the two objects
 		m_pMeshMngr->AddPlaneToRenderList(plane, color);
 	}
 
@@ -344,23 +350,25 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	float rThis, rOther;
 	matrix3 rotation, absRotation;
 
-	// Compute rotation matrix expressing otherOBB in thisOBB's coordinate frame
+	//put otherOBB into the same space as thisOBB
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
 			rotation[i][j] = glm::dot(thisOBB->u()[i], otherOBB->u()[j]);
 
-	// Compute translation vector translation
+	//get the vector that moves between the two objects
 	vector3 translation = otherOBB->c() - thisOBB->c();
-	// Bring translation into thisOBB's coordinate frame
+
+	//move that into the same coordinate space
 	translation = vector3(glm::dot(translation, thisOBB->u()[0]), 
 						  glm::dot(translation, thisOBB->u()[1]), 
 						  glm::dot(translation, thisOBB->u()[2]));
-
+	//add the smallest possible value for floats to the rotation matrix so that when
+	//two lines are near to parallel, the cross product doesn't become null
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
 			absRotation[i][j] = abs(rotation[i][j]) + FLT_EPSILON;
 
-	// Test axes L = A0, L = A1, L = A2
+	// X, Y, Z Axes for this OBB
 	for (int i = 0; i < 3; i++)
 	{
 		rThis = thisOBB->e()[i];
@@ -369,7 +377,7 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 			return i+1;
 	}
 
-	// Test axes L = B0, L = B1, L = B2
+	// X, Y, Z Axes for other OBB
 	for (int i = 0; i < 3; i++)
 	{
 		rThis = thisOBB->e()[0] * absRotation[0][i] + thisOBB->e()[1] * absRotation[1][i] + thisOBB->e()[2] * absRotation[2][i];
@@ -378,63 +386,64 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 			return i+4;
 	}
 
-	// Test axis L = A0 x B0
+	// Test the axis of ThisOBB's X cross OtherOBB's X
 	rThis = thisOBB->e()[1] * absRotation[2][0] + thisOBB->e()[2] * absRotation[1][0];
 	rOther = otherOBB->e()[1] * absRotation[0][2] + otherOBB->e()[2] * absRotation[0][1];
 	if (abs(translation[2] * rotation[1][0] - translation[1] * rotation[2][0]) > rThis + rOther) 
 		return eSATResults::SAT_AXxBX;
 
-	// Test axis L = A0 x B1
+	// Test the axis of ThisOBB's X with OtherOBB's Y
 	rThis = thisOBB->e()[1] * absRotation[2][1] + thisOBB->e()[2] * absRotation[1][1];
 	rOther = otherOBB->e()[0] * absRotation[0][2] + otherOBB->e()[2] * absRotation[0][0];
 	if (abs(translation[2] * rotation[1][1] - translation[1] * rotation[2][1]) > rThis + rOther) 
 		return eSATResults::SAT_AXxBY;
 
-	// Test axis L = A0 x B2
+	// Test the axis of ThisOBB's X with OtherOBB's Z
 	rThis = thisOBB->e()[1] * absRotation[2][2] + thisOBB->e()[2] * absRotation[1][2];
 	rOther = otherOBB->e()[0] * absRotation[0][1] + otherOBB->e()[1] * absRotation[0][0];
 	if (abs(translation[2] * rotation[1][2] - translation[1] * rotation[2][2]) > rThis + rOther) 
 		return eSATResults::SAT_AXxBZ;
 
-	// Test axis L = A1 x B0
+	// Test the axis of ThisOBB's Y with OtherOBB's X
 	rThis = thisOBB->e()[0] * absRotation[2][0] + thisOBB->e()[2] * absRotation[0][0];
 	rOther = otherOBB->e()[1] * absRotation[1][2] + otherOBB->e()[2] * absRotation[1][1];
 
 	if (abs(translation[0] * rotation[2][0] - translation[2] * rotation[0][0]) > rThis + rOther) 
 		return eSATResults::SAT_AYxBX;
 
-	// Test axis L = A1 x B1
+	// Test the axis of ThisOBB's Y with OtherOBB's Y
 	rThis = thisOBB->e()[0] * absRotation[2][1] + thisOBB->e()[2] * absRotation[0][1];
 	rOther = otherOBB->e()[0] * absRotation[1][2] + otherOBB->e()[2] * absRotation[1][0];
 	if (abs(translation[0] * rotation[2][1] - translation[2] * rotation[0][1]) > rThis + rOther) 
 		return eSATResults::SAT_AYxBY;
 
-	// Test axis L = A1 x B2
+	// Test the axis of ThisOBB's Y with OtherOBB's Z
 	rThis = thisOBB->e()[0] * absRotation[2][2] + thisOBB->e()[2] * absRotation[0][2];
 	rOther = otherOBB->e()[0] * absRotation[1][1] + otherOBB->e()[1] * absRotation[1][0];
 	if (abs(translation[0] * rotation[2][2] - translation[2] * rotation[0][2]) > rThis + rOther) 
 		return eSATResults::SAT_AYxBZ;
 
-	// Test axis L = A2 x B0
+	// Test the axis of ThisOBB's Z with OtherOBB's X
 	rThis = thisOBB->e()[0] * absRotation[1][0] + thisOBB->e()[1] * absRotation[0][0];
 	rOther = otherOBB->e()[1] * absRotation[2][2] + otherOBB->e()[2] * absRotation[2][1];
 	if (abs(translation[1] * rotation[0][0] - translation[0] * rotation[1][0]) > rThis + rOther) 
 		return eSATResults::SAT_AZxBX;
 
-	// Test axis L = A2 x B1
+	// Test the axis of ThisOBB's Z with OtherOBB's Y
 	rThis = thisOBB->e()[0] * absRotation[1][1] + thisOBB->e()[1] * absRotation[0][1];
 	rOther = otherOBB->e()[0] * absRotation[2][2] + otherOBB->e()[2] * absRotation[2][0];
 	if (abs(translation[1] * rotation[0][1] - translation[0] * rotation[1][1]) > rThis + rOther) 
 		return eSATResults::SAT_AZxBY;
 
-	// Test axis L = A2 x B2
+	// Test the axis of ThisOBB's Z with OtherOBB's Z
 	rThis = thisOBB->e()[0] * absRotation[1][2] + thisOBB->e()[1] * absRotation[0][2];
 	rOther = otherOBB->e()[0] * absRotation[2][1] + otherOBB->e()[1] * absRotation[2][0];
 	if (abs(translation[1] * rotation[0][2] - translation[0] * rotation[1][2]) > rThis + rOther) 
 		return eSATResults::SAT_AZxBZ;
 
 
-	//there is no axis test that separates this two objects*/
+	//No axis could be found that seperates the two objects
+	//must be intersecting
 	return eSATResults::SAT_NONE;
 
 }
